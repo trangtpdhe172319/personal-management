@@ -12,7 +12,7 @@ module.exports = {
                 message: "Internal server error"
             })
         }
-    },``
+    },
 
     getUserById: async (req, res) => {
         try {
