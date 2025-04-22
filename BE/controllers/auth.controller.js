@@ -7,10 +7,10 @@ module.exports = {
   // Đăng ký tài khoản
   register: async (req, res) => {
     try {
-      const { username, email, password, name, gender, dob } = req.body;
+      const { username, email, password, fullName, gender, dob } = req.body;
 
       // Kiểm tra dữ liệu bắt buộc
-      if (!username || !email || !password || !name || !gender || !dob) {
+      if (!username || !email || !password || !fullName || !gender || !dob) {
         return res.status(400).json({ message: "Vui lòng nhập đầy đủ thông tin." });
       }
 
@@ -39,7 +39,7 @@ module.exports = {
         username,
         email,
         password: hashedPassword,
-        name,
+        fullName,
         gender,
         dob
       });
@@ -75,7 +75,7 @@ module.exports = {
 
       // Tạo token
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "7d  "
+        expiresIn: "7d"
       });
 
       return res.status(200).json({

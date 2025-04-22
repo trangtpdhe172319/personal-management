@@ -1,0 +1,19 @@
+# Ignore FE dependencies
+fe/node_modules
+fe/.pnp
+fe/.pnp.js
+
+# Ignore BE dependencies (nếu có)
+be/node_modules
+
+# Coverage and build
+**/coverage
+**/build
+
+# Logs
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Env
+**/.env*

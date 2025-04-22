@@ -57,22 +57,10 @@ module.exports = {
 
 
             // Validate: Kiểm tra required
-            if (!title.trim() || !description.trim() || !start.trim()
-                || !end.trim() || !location.trim() || typeof is_all_day === 'undefined') {
+            if (!title.trim() ) {
                 return res.status(400).json({
-                    message: "Missing required fields: userId, title, description, start, end, location, is_all_day"
+                    message: "Missing required field title"
                 });
-            }
-
-            //Validate
-            // Kiểm tra Object
-            if (!mongoose.Types.ObjectId.isValid(userId)) {
-                return res.status(400).json({ error: "Invalid userId format" });
-            }
-
-            //Kiểm tra userId có tồn tại?
-            if (!User.findById(userId)) {
-                return res.status(400).json({ error: "UserId does not exist" });
             }
 
             //Validate: start và end là ngày hợp lệ
@@ -137,23 +125,12 @@ module.exports = {
             }
 
             // Validate: Kiểm tra required
-            if (!userId.trim() || !title.trim() || !description.trim() || !start.trim()
-                || !end.trim() || !location.trim() || typeof is_all_day === 'undefined') {
+            if (!title.trim()) {
                 return res.status(400).json({
-                    message: "Missing required fields: userId, title, description, start, end, location, is_all_day"
+                    message: "Missing required field title"
                 });
             }
 
-            //Validate
-            // Kiểm tra Object
-            if (!mongoose.Types.ObjectId.isValid(userId)) {
-                return res.status(400).json({ error: "Invalid userId format" });
-            }
-
-            //Kiểm tra userId có tồn tại?
-            if (!User.findById(userId)) {
-                return res.status(400).json({ error: "UserId does not exist" });
-            }
 
             //Validate: start và end là ngày hợp lệ
             const startDate = new Date(start)
@@ -228,6 +205,8 @@ module.exports = {
                 delete: deleteCalendar
             })
         } catch (error) {
+            console.log(error);
+            
             return res.status(500).json({
                 message: "Internal server error"
             })
