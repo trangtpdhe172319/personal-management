@@ -7,11 +7,25 @@ const calendarSchema = new mongoose.Schema({
       ref: "User",
       required: true
    },
-   event: String,
-   date: String,
-   time: String,
-   description: String
-}, {timestamps: false, versionKey: false})
+   title: String,
+   description: String,
+   start: {
+      type: Date,
+      required: true
+   },
+   end: {
+      type: Date,
+      required: true,
+      validate: {
+         validator: function (value) {
+            return this.start < value
+         },
+         message: "End date must be after start date"
+      }
+   },
+   location: String,
+   is_all_day: Boolean
+}, { timestamps: false, versionKey: false })
 
 const Calendar = mongoose.model('Calendar', calendarSchema)
 module.exports = Calendar
