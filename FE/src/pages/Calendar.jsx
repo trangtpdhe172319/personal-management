@@ -27,7 +27,7 @@ const Scheduler = () => {
 
   // Lấy dữ liệu từ API khi component được render lần đầu
   const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MDdjNTQ5ZjI2Nzc4MTliNGM2MDIzMSIsImlhdCI6MTc0NTMzOTg2NSwiZXhwIjoxNzQ1OTQ0NjY1fQ.k6jR_5E7VY8xOeyKIHNTFgoQMAiMG2giu35c6stmS4w";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MDllM2ExOThkNjU5M2I0Y2ZkODNjYyIsImlhdCI6MTc0NTQ3OTM0OCwiZXhwIjoxNzQ2MDg0MTQ4fQ.BxG9Wqz1nMNPnhNkrW7THVfgY4rlOc99oCexgtL5dtc";
   useEffect(() => {
     fetchData();
   }, []);
