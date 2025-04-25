@@ -6,7 +6,7 @@ const verifyToken = require('../middlewares/auth.middleware');
 router.get("/calendar", verifyToken, calendarController.showAllCalendar)
 router.get("/calendar/:id", verifyToken, calendarController.showDetailCalendar);
 router.post("/calendar", verifyToken, calendarController.addCalendar);
-router.put("/calendar/:id", verifyToken, calendarController.updateCalendar);
-router.delete("/calendar/:id", verifyToken, calendarController.deleteCalendar);
+router.put("/calendar/:calendarId/:taskId", verifyToken, calendarController.updateCalendar);
+router.delete("/calendar/:calendarId/:taskId", verifyToken, calendarController.deleteCalendar);
 
 module.exports = router;
