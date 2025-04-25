@@ -18,7 +18,7 @@ import {
   Stacked,
   Pyramid,
   Customers,
-  Kanban,
+  KanBanNew,
   Line,
   Area,
   Bar,
@@ -102,7 +102,7 @@ const App = () => {
                 <Route path="/customers" element={<Customers />} />
 
                 {/* apps  */}
-                <Route path="/kanban" element={<Kanban />} />
+                <Route path="/kanban" element={<KanBanNew />} />
                 <Route path="/editor" element={<Editor />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/color-picker" element={<ColorPicker />} />

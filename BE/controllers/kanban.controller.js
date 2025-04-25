@@ -4,21 +4,15 @@ const User = require("../models/user.model");
 const Kanban = require("../models/kanban.model");
 
 const showAllKanban = async (req, res) => {
-    try {
-        const kanban = await Kanban.find();
-        console.log(kanban);
-        if (!kanban || kanban.length === 0) {
-            return res.status(404).json({
-                message: "Kanban not found"
-            })
-        };
-
-        return res.status(200).json(kanban)
-    } catch (error) {
-        return res.status(500).json({
-            message: "Internal server error"
-        })
-    }
+  try {
+      const kanban = await Kanban.find();
+      if (!kanban || kanban.length === 0) {
+          return res.status(404).json({ message: "Kanban not found" });
+      }
+      return res.status(200).json(kanban);
+  } catch (error) {
+      return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 // GET /kanban/:userId - Lấy tất cả bảng của người dùng
@@ -31,74 +25,158 @@ const getKanbanByUser = async (req, res) => {
         }
         res.status(200).json(kanbanBoards);
     } catch (error) {
+      console.log(error);
+      
         res.status(500).json({ message: "Lỗi server", error });
     }
 };
 
-// POST /kanban - Tạo bảng mới (cần verifyToken)
+// POST /kanban
 const createKanban = async (req, res) => {
-    const { boardName, columns } = req.body;
-    const userId = req.user.id;
-  
-    try {
-      let finalColumns = columns;
-  
-      // Nếu không gửi thì dùng mặc định
-      if (!columns || columns.length === 0) {
-        finalColumns = [
-          { title: "Todo", tasks: [] },
-          { title: "In Progress", tasks: [] },
-          { title: "Done", tasks: [] }
-        ];
+  try {
+      const { boardName, columnTitle } = req.body;
+      const userId = req.userId || req.body.userId; 
+      // Nếu bạn đã có middleware auth gán req.userId thì dùng
+      if (!boardName || !columnTitle || !userId) {
+          return res.status(400).json({ message: "Thiếu boardName, columnTitle hoặc userId" });
       }
-  
-      // ✅ Kiểm tra trùng title giữa các cột
-      const titles = finalColumns.map(col => col.title);
-      const uniqueTitles = [...new Set(titles)];
-      if (titles.length !== uniqueTitles.length) {
-        return res.status(400).json({ message: "Tên cột bị trùng" });
-      }
-  
-      // ✅ Kiểm tra task trong từng cột có trùng không
-      for (const col of finalColumns) {
-        const taskSet = new Set(col.tasks);
-        if (taskSet.size !== col.tasks.length) {
-          return res.status(400).json({
-            message: `Cột "${col.title}" chứa task bị trùng`
-          });
-        }
-      }
-  
-      const newBoard = await Kanban.create({
-        userId,
-        boardName,
-        columns: finalColumns
+
+      const newKanban = new Kanban({
+          userId,
+          boardName,
+          columns: [{
+              title: columnTitle,
+              tasks: []
+          }]
       });
-  
-      res.status(201).json(newBoard);
-    } catch (error) {
-      res.status(500).json({ message: "Không thể tạo bảng", error });
-    }
-  };
-  
 
-// PUT /kanban/:boardId - Cập nhật bảng
-const updateKanban = async (req, res) => {
-    const boardId = req.params.boardId;
-    const userId = req.user.id;
-    const update = req.body;
+      await newKanban.save();
 
-    try {
-        const updated = await Kanban.findOneAndUpdate(
-            { _id: boardId, userId },
-            update,
-            { new: true }
-        );
-        if (!updated) return res.status(404).json({ message: "Không tìm thấy bảng để cập nhật" });
-        res.status(200).json(updated);
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi khi cập nhật", error });
-    }
+      return res.status(201).json({
+          message: "Tạo Kanban thành công",
+          kanban: newKanban
+      });
+  } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// Thêm task vào 1 column cụ thể (PUT /kanban/:boardId/add-task)
+const addTaskToColumn = async (req, res) => {
+  const { boardId } = req.params;
+  const { columnTitle, task } = req.body;
+
+  try {
+      const kanban = await Kanban.findById(boardId);
+      if (!kanban) return res.status(404).json({ message: "Kanban không tìm thấy" });
+
+      const column = kanban.columns.find(col => col.title === columnTitle);
+      if (!column) return res.status(404).json({ message: "Cột không tìm thấy" });
+
+      column.tasks.push(task);
+      await kanban.save();
+
+      res.status(200).json({ message: "Thêm task thành công", kanban });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// Thêm cột mới vào bảng (PUT /kanban/:boardId/add-column)
+const addColumnToBoard = async (req, res) => {
+  const { boardId } = req.params;
+  const { columnTitle } = req.body;
+
+  try {
+      const kanban = await Kanban.findById(boardId);
+      if (!kanban) return res.status(404).json({ message: "Kanban không tìm thấy" });
+
+      kanban.columns.push({ title: columnTitle, tasks: [] });
+      await kanban.save();
+
+      res.status(200).json({ message: "Thêm cột thành công", kanban });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// Di chuyển task giữa 2 cột (PUT /kanban/:boardId/move-task)
+const moveTaskBetweenColumns = async (req, res) => {
+  const { boardId } = req.params;
+  const { fromColumnTitle, toColumnTitle, task } = req.body;
+
+  try {
+      const kanban = await Kanban.findById(boardId);
+      if (!kanban) return res.status(404).json({ message: "Kanban không tìm thấy" });
+
+      const fromColumn = kanban.columns.find(col => col.title === fromColumnTitle);
+      const toColumn = kanban.columns.find(col => col.title === toColumnTitle);
+
+      if (!fromColumn || !toColumn) return res.status(404).json({ message: "Cột không tìm thấy" });
+
+      // Xóa task ở cột cũ
+      fromColumn.tasks = fromColumn.tasks.filter(t => t !== task);
+
+      // Thêm task vào cột mới
+      toColumn.tasks.push(task);
+
+      await kanban.save();
+
+      res.status(200).json({ message: "Di chuyển task thành công", kanban });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// 1. XÓA TASK – PUT /kanban/:boardId/delete-task
+const deleteTaskFromColumn = async (req, res) => {
+  const { boardId } = req.params;
+  const { columnTitle, task } = req.body;
+
+  try {
+      const kanban = await Kanban.findById(boardId);
+      if (!kanban) return res.status(404).json({ message: "Không tìm thấy Kanban" });
+
+      const column = kanban.columns.find(col => col.title === columnTitle);
+      if (!column) return res.status(404).json({ message: "Không tìm thấy cột" });
+
+      column.tasks = column.tasks.filter(t => t !== task);
+      await kanban.save();
+
+      res.status(200).json({ message: "Xóa task thành công", kanban });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+//2. XÓA COLUMN – PUT /kanban/:boardId/delete-column
+const deleteColumnFromBoard = async (req, res) => {
+  const { boardId } = req.params;
+  const { columnTitle } = req.body;
+
+  try {
+      const kanban = await Kanban.findById(boardId);
+      if (!kanban) return res.status(404).json({ message: "Không tìm thấy Kanban" });
+
+      const before = kanban.columns.length;
+      kanban.columns = kanban.columns.filter(col => col.title !== columnTitle);
+
+      if (kanban.columns.length === before) {
+          return res.status(404).json({ message: "Không tìm thấy cột cần xóa" });
+      }
+
+      await kanban.save();
+
+      res.status(200).json({ message: "Xóa cột thành công", kanban });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Lỗi server" });
+  }
 };
 
 // DELETE /kanban/:boardId - Xoá bảng
@@ -119,6 +197,7 @@ module.exports = {
     showAllKanban,
     getKanbanByUser,
     createKanban,
-    updateKanban,
+    addTaskToColumn, addColumnToBoard, moveTaskBetweenColumns, 
+    deleteTaskFromColumn, deleteColumnFromBoard,
     deleteKanban
 };

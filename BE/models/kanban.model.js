@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 const User = require("./user.model")
 
 const columnSchema = new mongoose.Schema({
-    name: String,
+    title: String,
     tasks: [String]
 })
 
