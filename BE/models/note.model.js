@@ -15,8 +15,10 @@ const NoteSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
   },
-  { timestamps: false, versionKey: false }
+  { timestamps: true, versionKey: false }
 );
 
 const Note = mongoose.model("Note", NoteSchema, "notes");

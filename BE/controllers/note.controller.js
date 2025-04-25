@@ -1,10 +1,33 @@
-const {Note} = require("../models/note.model");
+const { Note } = require("../models/note.model");
 
-// Lấy tất cả ghi chú của người dùng
+// Lấy tất cả ghi chú chưa bị xoá
 exports.showAllNote = async (req, res) => {
   try {
-    const notes = await Note.find({ userId: req.user.id }).sort({ _id: -1 });
+    const notes = await Note.find({
+      userId: req.user.id,
+      isDeleted: false,
+    }).sort({ _id: -1 });
     res.status(200).json(notes);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
+// Lấy danh sách ghi chú đã xoá (trong vòng 30 ngày)
+// Lấy ghi chú đã bị xóa trong vòng 30 ngày
+exports.showDeletedNotes = async (req, res) => {
+  try {
+    const deletedNotes = await Note.find({
+      userId: req.user.id,
+      isDeleted: true,
+      deletedAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // 30 ngày qua
+    }).sort({ deletedAt: -1 });
+
+    if (deletedNotes.length === 0) {
+      return res.status(404).json({ message: "Không có ghi chú đã bị xóa trong vòng 30 ngày" });
+    }
+
+    res.status(200).json(deletedNotes);
   } catch (error) {
     res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
@@ -16,6 +39,7 @@ exports.showDetailNote = async (req, res) => {
     const note = await Note.findOne({
       _id: req.params.id,
       userId: req.user.id,
+      isDeleted: false,
     });
     if (!note)
       return res.status(404).json({ message: "Không tìm thấy ghi chú" });
@@ -25,7 +49,7 @@ exports.showDetailNote = async (req, res) => {
   }
 };
 
-// Thêm mới một ghi chú
+// Thêm ghi chú mới
 exports.addNote = async (req, res) => {
   try {
     const { title, content } = req.body;
@@ -48,13 +72,13 @@ exports.addNote = async (req, res) => {
   }
 };
 
-// Cập nhật một ghi chú
+// Cập nhật ghi chú
 exports.updateNote = async (req, res) => {
   try {
     const { title, content } = req.body;
 
     const note = await Note.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user.id },
+      { _id: req.params.id, userId: req.user.id, isDeleted: false },
       { title, content },
       { new: true }
     );
@@ -71,19 +95,41 @@ exports.updateNote = async (req, res) => {
   }
 };
 
-// Xoá một ghi chú
+// Xoá mềm ghi chú
 exports.deleteNote = async (req, res) => {
   try {
-    const note = await Note.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.id,
-    });
+    const note = await Note.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id, isDeleted: false },
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
 
     if (!note) {
       return res.status(404).json({ message: "Không tìm thấy ghi chú để xoá" });
     }
 
-    res.status(200).json({ message: "Đã xoá ghi chú thành công" });
+    res.status(200).json({ message: "Đã chuyển ghi chú vào danh sách đã xoá" });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
+// Khôi phục ghi chú đã xoá
+exports.restoreNote = async (req, res) => {
+  try {
+    const note = await Note.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id, isDeleted: true },
+      { isDeleted: false, deletedAt: null },
+      { new: true }
+    );
+
+    if (!note) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy ghi chú để khôi phục" });
+    }
+
+    res.status(200).json({ message: "Đã khôi phục ghi chú thành công", note });
   } catch (error) {
     res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
