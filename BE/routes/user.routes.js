@@ -1,8 +1,15 @@
 const express = require("express");
+<<<<<<< Updated upstream
+=======
+const userController = require("../controllers/user.controller");
+const authMiddleware = require("../middlewares/auth.middleware");
+const multer = require("multer");
+>>>>>>> Stashed changes
 const router = express.Router();
 const userController = require("../controllers/user.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 
+<<<<<<< Updated upstream
 // Login route to authenticate user and set session
 router.post("/auth/login", async (req, res) => {
   const { username, password } = req.body;
@@ -67,6 +74,28 @@ router.post(
   "/:id/avatar",
   authMiddleware,
   userController.uploadAvatarMiddleware,
+=======
+// Configure multer for avatar uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/avatars/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + "-" + file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
+
+router.get("/users", userController.getAllUser);
+router.get("/user/jwt-current", authMiddleware, userController.getCurrentUser);
+router.get("/user/:id", userController.getUserById);
+router.put("/user/:id", authMiddleware, userController.updateUser);
+router.post(
+  "/user/:id/avatar",
+  authMiddleware,
+  upload.single("avatar"),
+>>>>>>> Stashed changes
   userController.uploadAvatar
 );
 

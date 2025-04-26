@@ -37,6 +37,9 @@ const upload = multer({
   },
 });
 
+const fs = require("fs");
+const path = require("path");
+
 module.exports = {
   getAllUser: async (req, res) => {
     try {
@@ -52,6 +55,7 @@ module.exports = {
 
   getUserById: async (req, res) => {
     try {
+<<<<<<< Updated upstream
       let id = req.params.id;
       if (!id) {
         if (req.session && req.session.userId) {
@@ -65,6 +69,12 @@ module.exports = {
       if (!id.trim() || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           message: "Invalid Id",
+=======
+      const id = req.params.id;
+      if (!id.trim() || !mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          message: "Id is required",
+>>>>>>> Stashed changes
         });
       }
 
@@ -85,6 +95,7 @@ module.exports = {
     }
   },
 
+<<<<<<< Updated upstream
   updateUser: async (req, res) => {
     try {
       const id = req.params.id;
@@ -118,10 +129,32 @@ module.exports = {
       return res.status(200).json(updatedUser);
     } catch (error) {
       console.error("Update user error:", error);
+=======
+  getCurrentUser: async (req, res) => {
+    try {
+      // Defensive check for req.account.id in case middleware is async
+      if (!req.account || !req.account.id) {
+        return res
+          .status(401)
+          .json({ message: "Unauthorized: Missing user info" });
+      }
+      const userId = req.account.id;
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      const user = await User.findById(userId).select("-password");
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      return res.status(200).json(user);
+    } catch (error) {
+      console.error("getCurrentUser error:", error);
+>>>>>>> Stashed changes
       return res.status(500).json({ message: "Internal server error" });
     }
   },
 
+<<<<<<< Updated upstream
   uploadAvatarMiddleware: upload.single("avatar"),
 
   uploadAvatar: async (req, res) => {
@@ -148,6 +181,62 @@ module.exports = {
       });
     } catch (error) {
       console.error("Upload avatar error:", error);
+=======
+  updateUser: async (req, res) => {
+    try {
+      const userId = req.params.id;
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      if (userId !== req.account.id) {
+        return res
+          .status(403)
+          .json({ message: "Unauthorized to update this user" });
+      }
+      const updateData = req.body;
+      // Prevent password update here for security
+      delete updateData.password;
+      const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+        new: true,
+      }).select("-password");
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      return res.status(200).json(updatedUser);
+    } catch (error) {
+      console.error("updateUser error:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  },
+
+  uploadAvatar: async (req, res) => {
+    try {
+      const userId = req.params.id;
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      if (userId !== req.account.id) {
+        return res
+          .status(403)
+          .json({ message: "Unauthorized to update this user" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      // Save file path to user avatar field
+      const avatarPath = `/uploads/avatars/${req.file.filename}`;
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { avatar: avatarPath },
+        { new: true }
+      ).select("-password");
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      return res.status(200).json({ avatar: updatedUser.avatar });
+    } catch (error) {
+      console.error("uploadAvatar error:", error);
+>>>>>>> Stashed changes
       return res.status(500).json({ message: "Internal server error" });
     }
   },
