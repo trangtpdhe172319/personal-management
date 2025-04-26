@@ -25,7 +25,8 @@ const Scheduler = () => {
   console.log("scheduleData", scheduleData);
 
   // Lấy dữ liệu từ API khi component được render lần đầu
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGJkY2ExZDhkZTIwMGZjODk3NzViZSIsImlhdCI6MTc0NTY3Nzc5OSwiZXhwIjoxNzQ1NjgxMzk5fQ.d1QwKapqoVZaQOrsf0fbciIJZTplVl-YgM167vUeoIY"
+  const token =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGJkY2ExZDhkZTIwMGZjODk3NzViZSIsImlhdCI6MTc0NTY4MDA0MywiZXhwIjoxNzQ1NjgzNjQzfQ.ylFn7N6CAWi1jvRN_ukIVxMHGsHURrrPzyYHjgq4xjg";
   useEffect(() => {
     fetchData();
   }, []);

@@ -8,6 +8,7 @@ const userRouter = require('./routes/user.routes')
 const calendarRoutes = require("./routes/calendar.routes")
 const account = require("./routes/account.route");
 const kanbanRoutes = require("./routes/kanban.route")
+const noteRoutes = require("./routes/note.routes")
 const app = express();
 // middleware cho phép domain khác có thể gửi yêu cầu và nhận res
 app.use(cors());
@@ -31,6 +32,7 @@ app.use('/api', userRouter)
 app.use('/api', calendarRoutes)
 app.use("/api",account);
 app.use("/api", kanbanRoutes)
+app.use("/api", noteRoutes)
 connectDb();
 const PORT = process.env.PORT || 9999;
 app.listen(PORT, () => {
