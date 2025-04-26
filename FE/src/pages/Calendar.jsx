@@ -16,17 +16,13 @@ import {
 import { DatePickerComponent } from "@syncfusion/ej2-react-calendars";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axiosInstance from "./Authentication/helper/axiosInstance";
 
 const Scheduler = () => {
   const [scheduleData, setScheduleData] = useState([]);
   const [scheduleObj, setScheduleObj] = useState();
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log("scheduleData", scheduleData);
-
-  // Lấy dữ liệu từ API khi component được render lần đầu
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGJkY2ExZDhkZTIwMGZjODk3NzViZSIsImlhdCI6MTc0NTY4MDA0MywiZXhwIjoxNzQ1NjgzNjQzfQ.ylFn7N6CAWi1jvRN_ukIVxMHGsHURrrPzyYHjgq4xjg";
   useEffect(() => {
     fetchData();
   }, []);
@@ -34,12 +30,8 @@ const Scheduler = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("http://localhost:9999/api/calendar", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
+      const response = await axiosInstance.get("/api/calendar");
+
       // Flatten calendar and tasks
       const formattedData = response.data.flatMap((calendar) =>
         calendar.tasks.map((task) => ({
@@ -53,7 +45,7 @@ const Scheduler = () => {
           Location: task.location || "",
         }))
       );
-  
+
       setScheduleData(formattedData);
     } catch (error) {
       console.error("Error fetching data: ", error?.response?.data?.message);
@@ -64,7 +56,6 @@ const Scheduler = () => {
       }, 500);
     }
   };
-  
 
   const change = (args) => {
     scheduleObj.selectedDate = args.value;
@@ -74,7 +65,7 @@ const Scheduler = () => {
   // Hàm tạo sự kiện mới
   const createEvent = async (newEvent) => {
     const eventToSend = {
-      date: newEvent.StartTime.toISOString().split('T')[0],  
+      date: newEvent.StartTime.toISOString().split("T")[0],
       tasks: [
         {
           title: newEvent.Subject,
@@ -83,24 +74,15 @@ const Scheduler = () => {
           end: newEvent.EndTime.toISOString(),
           location: newEvent.Location || "",
           is_all_day: newEvent.IsAllDay || false,
-        }
-      ]
+        },
+      ],
     };
 
     try {
-      await axios.post(
-        "http://localhost:9999/api/calendar",
-        eventToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axiosInstance.post("/api/calendar", eventToSend);
     } catch (error) {
-      fetchData()
+      fetchData();
       toast.error(error?.response?.data?.error);
-
     }
   };
 
@@ -113,17 +95,11 @@ const Scheduler = () => {
       location: updatedEvent.Location || "",
       is_all_day: updatedEvent.IsAllDay || false,
     };
-  
+
     try {
-      await axios.put(
-        // updatedEvent.CalendarId = calendar _id, updatedEvent.Id = task _id
-        `http://localhost:9999/api/calendar/${updatedEvent.CalendarId}/${updatedEvent.Id}`,
-        eventToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // gửi kèm token
-          },
-        }
+      await axiosInstance.put(
+        `/api/calendar/${updatedEvent.CalendarId}/${updatedEvent.Id}`,
+        eventToSend
       );
       toast.success("Cập nhật thành công!");
     } catch (error) {
@@ -131,17 +107,11 @@ const Scheduler = () => {
       toast.error(error?.response?.data?.message || "Lỗi cập nhật sự kiện");
     }
   };
-  
-  
 
   // Hàm xóa sự kiện
-  const deleteEvent = async (calendarId,taskId) => {
+  const deleteEvent = async (calendarId, taskId) => {
     try {
-      await axios.delete(`http://localhost:9999/api/calendar/${calendarId}/${taskId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axiosInstance.delete(`/api/calendar/${calendarId}/${taskId}`);
       toast.success("Xóa sự kiện thành công!");
       fetchData();
     } catch (error) {
@@ -149,7 +119,6 @@ const Scheduler = () => {
       toast.error(error?.response?.data?.message || "Lỗi xóa sự kiện");
     }
   };
-  
 
   const handleActionComplete = async (args) => {
     if (args.requestType === "eventCreated") {
@@ -157,7 +126,7 @@ const Scheduler = () => {
     } else if (args.requestType === "eventChanged") {
       await updateEvent(args.data[0]);
     } else if (args.requestType === "eventRemoved") {
-      await deleteEvent(args.data[0].CalendarId,args.data[0].Id);
+      await deleteEvent(args.data[0].CalendarId, args.data[0].Id);
     }
   };
 

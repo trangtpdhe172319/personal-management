@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "../components";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import axiosInstance from "./Authentication/helper/axiosInstance";
 
 const Kanban = () => {
   const [kanbans, setKanbans] = useState([]);
@@ -12,10 +13,6 @@ const Kanban = () => {
   const [newTaskInput, setNewTaskInput] = useState({}); // key = `${kanbanId}_${columnTitle}`
   const [moveTaskData, setMoveTaskData] = useState(null); // moveTaskData = { kanbanId, fromColumn, task }
 
-
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGJkY2ExZDhkZTIwMGZjODk3NzViZSIsImlhdCI6MTc0NTY4OTMyNSwiZXhwIjoxNzQ1NjkyOTI1fQ.df7Q5-xQrKAj_tFoQ84aNFX6wIPEUc8g5pOEh67o_5A"; 
-
   useEffect(() => {
     fetchKanbans();
   }, []);
@@ -23,13 +20,11 @@ const Kanban = () => {
   const fetchKanbans = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("http://localhost:9999/api/kanban", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axiosInstance.get("/api/kanban", {});
       setKanbans(response.data);
     } catch (error) {
-      console.error(error);
-      toast.error(error?.response?.data?.message || "Lỗi tải Kanban");
+      // toast.error(error?.response?.data?.message || "Lỗi tải Kanban");
+      setKanbans([]);
     } finally {
       setIsLoading(false);
     }
@@ -47,16 +42,10 @@ const Kanban = () => {
       .filter((task) => task.length > 0);
 
     try {
-      await axios.post(
-        "http://localhost:9999/api/kanban",
-        {
-          boardName: newBoardName,
-          tasks: taskArray,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axiosInstance.post("/api/kanban", {
+        boardName: newBoardName,
+        tasks: taskArray,
+      });
       toast.success("Tạo bảng thành công!");
       setNewBoardName("");
       setNewTasks("");
@@ -83,11 +72,10 @@ const Kanban = () => {
     }
 
     try {
-      await axios.put(
-        `http://localhost:9999/api/kanban/${kanbanId}/add-task`,
-        { task, columnTitle },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axiosInstance.put(`/api/kanban/${kanbanId}/add-task`, {
+        task,
+        columnTitle,
+      });
       toast.success(`Thêm task "${task}" thành công! ✅`);
       fetchKanbans();
       setNewTaskInput((prev) => ({ ...prev, [key]: "" }));
@@ -97,18 +85,16 @@ const Kanban = () => {
     }
   };
 
-
   const handleDeleteTask = async (kanbanId, columnTitle, task) => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa task "${task}" không?`)) {
       return;
     }
 
     try {
-      await axios.put(
-        `http://localhost:9999/api/kanban/${kanbanId}/delete-task`,
-        { task, columnTitle },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axiosInstance.put(`/api/kanban/${kanbanId}/delete-task`, {
+        task,
+        columnTitle,
+      });
       toast.success(`Đã xóa task "${task}" thành công!`);
       fetchKanbans();
     } catch (error) {
@@ -119,11 +105,11 @@ const Kanban = () => {
 
   const handleMoveTask = async (kanbanId, fromColumn, toColumn, task) => {
     try {
-      await axios.put(
-        `http://localhost:9999/api/kanban/${kanbanId}/move-task`,
-        { task, fromColumn, toColumn },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axiosInstance.put(`/api/kanban/${kanbanId}/move-task`, {
+        task,
+        fromColumn,
+        toColumn,
+      });
       toast.success(`✅ Đã chuyển "${task}" đến cột "${toColumn}"!`);
       fetchKanbans();
       setMoveTaskData(null);
@@ -133,16 +119,13 @@ const Kanban = () => {
     }
   };
 
-
   const handleDeleteBoard = async (kanbanId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bảng Kanban này không?")) {
       return;
     }
 
     try {
-      await axios.delete(`http://localhost:9999/api/kanban/${kanbanId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axiosInstance.delete(`/api/kanban/${kanbanId}`);
       toast.success("Xóa bảng Kanban thành công!");
       fetchKanbans();
     } catch (error) {
@@ -154,7 +137,7 @@ const Kanban = () => {
   return (
     <div className="m-2 md:m-10 mt-24 p-4 md:p-10 bg-white rounded-3xl">
       <Header title="Các bảng Kanban của bạn" />
-
+      <ToastContainer />
       <div className="flex justify-end mb-6">
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
@@ -220,40 +203,53 @@ const Kanban = () => {
                   >
                     Xóa 🗑️
                   </button>
-
                 </div>
 
                 <div className="grid grid-cols-4 gap-4">
                   {moveTaskData && (
                     <>
                       {/* Nền mờ backdrop */}
-                      <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40" onClick={() => setMoveTaskData(null)}></div>
+                      <div
+                        className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40"
+                        onClick={() => setMoveTaskData(null)}
+                      ></div>
 
                       {/* Modal move task */}
                       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl p-8 z-50 w-[90%] max-w-md">
-                        <h3 className="text-2xl font-bold mb-6 text-center">🚚 Di chuyển Task</h3>
+                        <h3 className="text-2xl font-bold mb-6 text-center">
+                          🚚 Di chuyển Task
+                        </h3>
 
                         <p className="text-center mb-4">
-                          Task: <span className="font-semibold text-blue-600">{moveTaskData.task}</span>
+                          Task:{" "}
+                          <span className="font-semibold text-blue-600">
+                            {moveTaskData.task}
+                          </span>
                         </p>
                         <p className="text-center mb-8">
-                          Từ: <span className="font-semibold text-green-600">{moveTaskData.fromColumn}</span>
+                          Từ:{" "}
+                          <span className="font-semibold text-green-600">
+                            {moveTaskData.fromColumn}
+                          </span>
                         </p>
 
                         <div className="flex flex-col gap-4">
                           {kanbans
                             .find((k) => k._id === moveTaskData.kanbanId)
-                            ?.columns
-                            .filter((col) => col.title !== moveTaskData.fromColumn)
+                            ?.columns.filter(
+                              (col) => col.title !== moveTaskData.fromColumn
+                            )
                             .map((col) => (
                               <button
                                 key={col.title}
-                                onClick={() => handleMoveTask(
-                                  moveTaskData.kanbanId,
-                                  moveTaskData.fromColumn,
-                                  col.title,
-                                  moveTaskData.task
-                                )}
+                                onClick={() =>
+                                  handleMoveTask(
+                                    moveTaskData.kanbanId,
+                                    moveTaskData.fromColumn,
+                                    col.title,
+                                    moveTaskData.task
+                                  )
+                                }
                                 className="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-semibold transition"
                               >
                                 ➡️ Di chuyển tới "{col.title}"
@@ -316,7 +312,13 @@ const Kanban = () => {
                                   <div className="flex gap-2 items-center">
                                     {/* Nút xóa task */}
                                     <button
-                                      onClick={() => handleDeleteTask(kanban._id, column.title, task)}
+                                      onClick={() =>
+                                        handleDeleteTask(
+                                          kanban._id,
+                                          column.title,
+                                          task
+                                        )
+                                      }
                                       className="text-red-500 hover:text-red-500 font-bold ml-2"
                                       title="Xóa task"
                                     >
@@ -325,7 +327,13 @@ const Kanban = () => {
 
                                     {/* Nút move task */}
                                     <button
-                                      onClick={() => setMoveTaskData({ kanbanId: kanban._id, fromColumn: column.title, task })}
+                                      onClick={() =>
+                                        setMoveTaskData({
+                                          kanbanId: kanban._id,
+                                          fromColumn: column.title,
+                                          task,
+                                        })
+                                      }
                                       className="text-blue-500 hover:text-blue-700 font-bold ml-2"
                                       title="Chuyển task"
                                     >
@@ -333,7 +341,6 @@ const Kanban = () => {
                                     </button>
                                   </div>
                                 </div>
-
                               ))
                             ) : (
                               <div className="text-gray-400 italic text-center">
