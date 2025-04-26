@@ -6,7 +6,11 @@ const connectDb = require('./config/db');
 require('dotenv').config();
 const userRouter = require('./routes/user.routes')
 const calendarRoutes = require("./routes/calendar.routes")
+<<<<<<< HEAD
 const account = require("./routes/account.route");
+=======
+const noteRoutes = require("./routes/note.routes")
+>>>>>>> manh
 const app = express();
 // middleware cho phép domain khác có thể gửi yêu cầu và nhận res
 app.use(cors());
@@ -28,7 +32,11 @@ mongoose
 
 app.use('/api', userRouter)
 app.use('/api', calendarRoutes)
+<<<<<<< HEAD
 app.use("/api",account);
+=======
+app.use("/api", noteRoutes);
+>>>>>>> manh
 connectDb();
 const PORT = process.env.PORT || 9999;
 app.listen(PORT, () => {
