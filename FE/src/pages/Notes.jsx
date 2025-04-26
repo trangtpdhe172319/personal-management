@@ -12,8 +12,7 @@ const Note = () => {
   const [deletedNotes, setDeletedNotes] = useState([]); 
 
   const API_BASE = "http://localhost:9999/api/note";
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGJkY2ExZDhkZTIwMGZjODk3NzViZSIsImlhdCI6MTc0NTY4MDA0MywiZXhwIjoxNzQ1NjgzNjQzfQ.ylFn7N6CAWi1jvRN_ukIVxMHGsHURrrPzyYHjgq4xjg";
+  const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
     fetchNotes();

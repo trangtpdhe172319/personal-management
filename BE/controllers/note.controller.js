@@ -134,3 +134,47 @@ exports.restoreNote = async (req, res) => {
     res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
 };
+
+
+
+exports.countNotes = async (req, res) => {
+  try {
+    const notes = await Note.aggregate([
+      {
+        $match: {
+          userId: req.account.id,
+          isDeleted: false,
+          createdAt: { $type: "date" } // Thêm điều kiện này
+        },
+      },
+      {
+        $project: {
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+        },
+      },
+      {
+        $group: {
+          _id: "$day",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    res.status(200).json({
+      total: notes.length,
+      notes: notes.map(note => ({
+        date: note._id,
+        count: note.count,
+      })),
+    });
+  } catch (error) {
+    console.error("Lỗi backend:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+

@@ -20,7 +20,8 @@
     "react-loader-spinner": "^6.1.6",
     "react-router-dom": "^6.2.1",
     "react-scripts": "5.0.0",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "recharts": "^2.15.3"
   },
   "scripts": {
     "start": "react-scripts start",
