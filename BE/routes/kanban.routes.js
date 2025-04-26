@@ -1,16 +1,16 @@
 const express = require('express');
-const kanbanController = require('../controllers/kanban.controller')
 const router = express.Router();
+const kanbanController = require('../controllers/kanban.controller')
 const verifyToken = require('../middlewares/auth.middleware');
 
 router.get("/kanban", verifyToken, kanbanController.showAllKanban);
 router.get("/kanban/:userId", verifyToken, kanbanController.getKanbanByUser);
-router.post("/kanban", verifyToken, kanbanController.createKanban);
-router.put("/kanban/:boardId/add-task", verifyToken, kanbanController.addTaskToColumn);
-router.put("/kanban/:boardId/add-column", verifyToken, kanbanController.addColumnToBoard);
-router.put("/kanban/:boardId/move-task", verifyToken, kanbanController.moveTaskBetweenColumns);
-router.put("/kanban/:boardId/delete-task", verifyToken, kanbanController.deleteTaskFromColumn);
-router.put("/kanban/:boardId/delete-column", verifyToken, kanbanController.deleteColumnFromBoard);
-router.delete("/kanban/:boardId", verifyToken, kanbanController.deleteKanban);
 
+router.post("/kanban", verifyToken, kanbanController.createKanban);
+
+router.put("/kanban/:kanbanId/move-task", verifyToken, kanbanController.moveTask);
+router.put("/kanban/:kanbanId/add-task", verifyToken, kanbanController.addTask);
+router.put("/kanban/:kanbanId/delete-task", verifyToken, kanbanController.deleteTask);
+
+router.delete("/kanban/:kanbanId",verifyToken, kanbanController.deleteKanban)
 module.exports = router;
