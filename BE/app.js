@@ -1,10 +1,11 @@
 // app.js
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+const express = require("express");
+const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+const session = require("express-session");
 
-const productRouter = require('./routes/product');
+const productRouter = require("./routes/product");
 
 const app = express();
 
@@ -16,18 +17,34 @@ mongoose.connect(mongoDB);
 mongoose.Promise = global.Promise;
 
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use('/product', productRouter);
+// Serve static files from uploads directory
+app.use("/uploads", express.static("uploads"));
 
-const port = 3001;
+// Setup express-session middleware
+app.use(
+  session({
+    secret: "your-secret-key", // replace with a strong secret in production
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }, // set secure: true if using https
+  })
+);
 
-db.once('open', function() {
-    console.log('Connected!');
-    app.listen(port, () => {
-        console.log('Server is up and running on port numner ' + port);
-    });
+app.use("/product", productRouter);
+
+const userRouter = require("./routes/user.routes");
+app.use("/api/user", userRouter);
+
+const port = 9999;
+
+db.once("open", function () {
+  console.log("Connected!");
+  app.listen(port, () => {
+    console.log("Server is up and running on port numner " + port);
+  });
 });
