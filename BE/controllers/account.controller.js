@@ -205,8 +205,7 @@ const resetPassword = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "Account not found" });
         }
-        console.log("pass rêseret",newPassword)
-        user.password = await bcrypt.hash(newPassword, 10);
+        user.password = newPassword;
 
         await user.save();
         return res.json({ message: "Password changed successfully!" });
