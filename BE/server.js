@@ -9,6 +9,7 @@ const calendarRoutes = require("./routes/calendar.routes")
 const account = require("./routes/account.route");
 const kanbanRoutes = require("./routes/kanban.route")
 const noteRoutes = require("./routes/note.routes")
+
 const app = express();
 // middleware cho phép domain khác có thể gửi yêu cầu và nhận res
 app.use(cors());

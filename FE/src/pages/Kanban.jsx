@@ -1,190 +1,381 @@
 import React, { useEffect, useState } from "react";
-import {
-  KanbanComponent,
-  ColumnsDirective,
-  ColumnDirective,
-} from "@syncfusion/ej2-react-kanban";
-
-import { kanbanGrid } from "../data/dummy";
 import { Header } from "../components";
 import axios from "axios";
 import { toast } from "react-toastify";
 
 const Kanban = () => {
-  const [kanbanData, setKanbanData] = useState([]);
+  const [kanbans, setKanbans] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newBoardName, setNewBoardName] = useState("");
+  const [newTasks, setNewTasks] = useState("");
+  const [newTaskInput, setNewTaskInput] = useState({}); // key = `${kanbanId}_${columnTitle}`
+  const [moveTaskData, setMoveTaskData] = useState(null); // moveTaskData = { kanbanId, fromColumn, task }
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newTaskData, setNewTaskData] = useState({
-    Summary: '',
-    Status: '',
-    BoardName: '',
-  });
 
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGJkY2ExZDhkZTIwMGZjODk3NzViZSIsImlhdCI6MTc0NTY2NzA4NSwiZXhwIjoxNzQ1NjcwNjg1fQ.RjwTCDeyxXQTVXmDD1lPHaLUPtESHtBVLPKdskzVRYE";
+  const token =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGJkY2ExZDhkZTIwMGZjODk3NzViZSIsImlhdCI6MTc0NTY4OTMyNSwiZXhwIjoxNzQ1NjkyOTI1fQ.df7Q5-xQrKAj_tFoQ84aNFX6wIPEUc8g5pOEh67o_5A"; 
 
   useEffect(() => {
-    fetchData();
+    fetchKanbans();
   }, []);
 
-  const fetchData = async () => {
+  const fetchKanbans = async () => {
     try {
       setIsLoading(true);
       const response = await axios.get("http://localhost:9999/api/kanban", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      const formattedData = response.data.flatMap((kanban) =>
-        kanban.columns.flatMap((column) =>
-          column.tasks.map((task, index) => ({
-            Summary: task,
-            Status: column.title,
-            BoardName: kanban.boardName,
-          }))
-        )
-      );
-
-      setKanbanData(formattedData);
+      setKanbans(response.data);
     } catch (error) {
-      console.error("Error fetching data: ", error?.response?.data?.message);
-      toast.error(error?.response?.data?.message || "Lỗi tải kanban");
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Lỗi tải Kanban");
     } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
+      setIsLoading(false);
     }
   };
 
-  const createEvent = async (newEvent) => {
-    try {
-      if (!newEvent?.Summary || !newEvent?.Status || !newEvent?.BoardName) {
-        toast.error("Enter required task");
-        return;
-      }
+  const handleCreateBoard = async () => {
+    if (!newBoardName.trim()) {
+      toast.error("Vui lòng nhập tên bảng");
+      return;
+    }
 
+    const taskArray = newTasks
+      .split(",")
+      .map((task) => task.trim())
+      .filter((task) => task.length > 0);
+
+    try {
       await axios.post(
         "http://localhost:9999/api/kanban",
         {
-          summary: newEvent.Summary,
-          status: newEvent.Status,
-          boardName: newEvent.BoardName,
+          boardName: newBoardName,
+          tasks: taskArray,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      toast.success("Thêm task thành công!");
-      fetchData(); // Reload lại dữ liệu
+      toast.success("Tạo bảng thành công!");
+      setNewBoardName("");
+      setNewTasks("");
+      setShowCreateForm(false);
+      fetchKanbans();
     } catch (error) {
-      console.error("Error creating task: ", error?.response?.data?.message);
-      toast.error(error?.response?.data?.message || "Lỗi thêm task");
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Tạo bảng thất bại");
     }
   };
 
-  const updateEvent = async (updatedEvent) => {
-    // TODO: bạn có thể viết thêm hàm update nếu cần
+  const handleAddTask = async (kanbanId, columnTitle) => {
+    if (columnTitle !== "To Do") {
+      toast.error("Chỉ được thêm task vào cột To Do!");
+      return;
+    }
+
+    const key = `${kanbanId}_${columnTitle}`;
+    const task = newTaskInput[key]?.trim();
+
+    if (!task) {
+      toast.error("Vui lòng nhập nội dung task");
+      return;
+    }
+
+    try {
+      await axios.put(
+        `http://localhost:9999/api/kanban/${kanbanId}/add-task`,
+        { task, columnTitle },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Thêm task "${task}" thành công! ✅`);
+      fetchKanbans();
+      setNewTaskInput((prev) => ({ ...prev, [key]: "" }));
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Thêm task thất bại");
+    }
   };
 
-  const deleteEvent = async (deletedEvent) => {
-    // TODO: bạn có thể viết thêm hàm delete nếu cần
+
+  const handleDeleteTask = async (kanbanId, columnTitle, task) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa task "${task}" không?`)) {
+      return;
+    }
+
+    try {
+      await axios.put(
+        `http://localhost:9999/api/kanban/${kanbanId}/delete-task`,
+        { task, columnTitle },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Đã xóa task "${task}" thành công!`);
+      fetchKanbans();
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Xóa task thất bại");
+    }
   };
 
-  const handleActionComplete = async (args) => {
-    if (args.requestType === "eventCreated") {
-      await createEvent(args.data[0]);
-    } else if (args.requestType === "eventChanged") {
-      await updateEvent(args.data[0]);
-    } else if (args.requestType === "eventRemoved") {
-      await deleteEvent(args.data[0]);
+  const handleMoveTask = async (kanbanId, fromColumn, toColumn, task) => {
+    try {
+      await axios.put(
+        `http://localhost:9999/api/kanban/${kanbanId}/move-task`,
+        { task, fromColumn, toColumn },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`✅ Đã chuyển "${task}" đến cột "${toColumn}"!`);
+      fetchKanbans();
+      setMoveTaskData(null);
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Di chuyển task thất bại");
+    }
+  };
+
+
+  const handleDeleteBoard = async (kanbanId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bảng Kanban này không?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`http://localhost:9999/api/kanban/${kanbanId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Xóa bảng Kanban thành công!");
+      fetchKanbans();
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Xóa bảng thất bại");
     }
   };
 
   return (
-    <div className="m-2 md:m-10 mt-24 p-2 md:p-10 bg-white rounded-3xl relative">
-      <Header category="App" title="Kanban" />
-      <div className="flex justify-end mb-4">
+    <div className="m-2 md:m-10 mt-24 p-4 md:p-10 bg-white rounded-3xl">
+      <Header title="Các bảng Kanban của bạn" />
+
+      <div className="flex justify-end mb-6">
         <button
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg"
         >
-          Add Task
+          {showCreateForm ? "Đóng" : "➕ Tạo bảng mới"}
         </button>
       </div>
 
-      <KanbanComponent
-        id="kanban"
-        keyField="Status"
-        dataSource={kanbanData}
-        cardSettings={{ contentField: "Summary", headerField: "BoardName" }}
-        actionComplete={handleActionComplete}
-      >
-        <ColumnsDirective>
-          {kanbanGrid.map((item, index) => (
-            <ColumnDirective key={index} {...item} />
-          ))}
-        </ColumnsDirective>
-      </KanbanComponent>
-
-      {/* Modal Thêm Task */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Add New Task</h2>
-
+      {showCreateForm && (
+        <div className="bg-gray-100 p-6 rounded-lg mb-10">
+          <h2 className="text-xl font-semibold mb-4">Tạo bảng mới</h2>
+          <div className="mb-4">
+            <label className="block mb-2 font-medium">Tên bảng</label>
             <input
               type="text"
-              placeholder="Summary"
-              className="w-full mb-3 p-2 border rounded"
-              value={newTaskData.Summary}
-              onChange={(e) => setNewTaskData({ ...newTaskData, Summary: e.target.value })}
+              value={newBoardName}
+              onChange={(e) => setNewBoardName(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              placeholder="Nhập tên bảng Kanban"
             />
-
-            <select
-              className="w-full mb-3 p-2 border rounded"
-              value={newTaskData.Status}
-              onChange={(e) => setNewTaskData({ ...newTaskData, Status: e.target.value })}
-            >
-              <option value="">Choose Status</option>
-              {kanbanGrid.map((item, index) => (
-                <option key={index} value={item.keyField}>
-                  {item.headerText}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="text"
-              placeholder="BoardName"
-              className="w-full mb-3 p-2 border rounded"
-              value={newTaskData.BoardName}
-              onChange={(e) => setNewTaskData({ ...newTaskData, BoardName: e.target.value })}
-            />
-
-            <div className="flex justify-end gap-2">
-              <button
-                className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded"
-                onClick={() => setIsAddModalOpen(false)}
-              >
-                Huỷ
-              </button>
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                onClick={async () => {
-                  await createEvent(newTaskData);
-                  setIsAddModalOpen(false);
-                  setNewTaskData({ Summary: '', Status: '', BoardName: '' });
-                }}
-              >
-                Lưu
-              </button>
-            </div>
           </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-medium">
+              Tasks ban đầu (phân cách bằng dấu phẩy)
+            </label>
+            <input
+              type="text"
+              value={newTasks}
+              onChange={(e) => setNewTasks(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              placeholder="Ví dụ: Task 1, Task 2, Task 3"
+            />
+          </div>
+          <button
+            onClick={handleCreateBoard}
+            className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg"
+          >
+            Tạo
+          </button>
         </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-center my-10 text-lg">Đang tải dữ liệu...</div>
+      ) : (
+        <>
+          {kanbans.length === 0 ? (
+            <div className="text-center text-gray-500 my-10">
+              Không có bảng Kanban nào.
+            </div>
+          ) : (
+            kanbans.map((kanban) => (
+              <div key={kanban._id} className="mb-16">
+                <div className="flex justify-center items-center gap-4 mb-6">
+                  <h2 className="text-2xl font-semibold text-center">
+                    {kanban.boardName}
+                  </h2>
+                  <button
+                    onClick={() => handleDeleteBoard(kanban._id)}
+                    className="bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 font-bold text-xl p-2 rounded-full shadow-md transition duration-300"
+                    title="Xóa bảng"
+                  >
+                    Xóa 🗑️
+                  </button>
+
+                </div>
+
+                <div className="grid grid-cols-4 gap-4">
+                  {moveTaskData && (
+                    <>
+                      {/* Nền mờ backdrop */}
+                      <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40" onClick={() => setMoveTaskData(null)}></div>
+
+                      {/* Modal move task */}
+                      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl p-8 z-50 w-[90%] max-w-md">
+                        <h3 className="text-2xl font-bold mb-6 text-center">🚚 Di chuyển Task</h3>
+
+                        <p className="text-center mb-4">
+                          Task: <span className="font-semibold text-blue-600">{moveTaskData.task}</span>
+                        </p>
+                        <p className="text-center mb-8">
+                          Từ: <span className="font-semibold text-green-600">{moveTaskData.fromColumn}</span>
+                        </p>
+
+                        <div className="flex flex-col gap-4">
+                          {kanbans
+                            .find((k) => k._id === moveTaskData.kanbanId)
+                            ?.columns
+                            .filter((col) => col.title !== moveTaskData.fromColumn)
+                            .map((col) => (
+                              <button
+                                key={col.title}
+                                onClick={() => handleMoveTask(
+                                  moveTaskData.kanbanId,
+                                  moveTaskData.fromColumn,
+                                  col.title,
+                                  moveTaskData.task
+                                )}
+                                className="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-semibold transition"
+                              >
+                                ➡️ Di chuyển tới "{col.title}"
+                              </button>
+                            ))}
+
+                          <button
+                            onClick={() => setMoveTaskData(null)}
+                            className="bg-gray-400 hover:bg-gray-500 text-white py-2 rounded-lg font-semibold transition"
+                          >
+                            ❌ Hủy
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {kanban.columns.map((column) => {
+                    const key = `${kanban._id}_${column.title}`;
+                    const isTodoColumn = column.title === "To Do"; // Chỉ cho To Do
+
+                    return (
+                      <div
+                        key={column.title}
+                        className="bg-gray-100 p-4 rounded-lg shadow-md min-h-[300px] flex flex-col justify-between"
+                      >
+                        <div>
+                          <h3 className="text-lg font-bold mb-4 text-center">
+                            {column.title}
+                          </h3>
+
+                          <div className="flex flex-col gap-2 mb-4">
+                            {column.tasks.length > 0 ? (
+                              column.tasks.map((task, index) => (
+                                // <div
+                                //   key={index}
+                                //   className="bg-white p-2 rounded-md shadow-sm border hover:shadow-md transition flex items-center justify-between"
+                                // >
+                                //   <span>{task}</span>
+                                //   <button
+                                //     onClick={() =>
+                                //       handleDeleteTask(
+                                //         kanban._id,
+                                //         column.title,
+                                //         task
+                                //       )
+                                //     }
+                                //     className="text-red-500 hover:text-red-700 font-bold ml-2"
+                                //     title="Xóa task"
+                                //   >
+                                //     -
+                                //   </button>
+                                // </div>
+                                <div
+                                  key={index}
+                                  className="bg-white p-2 rounded-md shadow-sm border hover:shadow-md transition flex items-center justify-between relative"
+                                >
+                                  <span>{task}</span>
+
+                                  <div className="flex gap-2 items-center">
+                                    {/* Nút xóa task */}
+                                    <button
+                                      onClick={() => handleDeleteTask(kanban._id, column.title, task)}
+                                      className="text-red-500 hover:text-red-500 font-bold ml-2"
+                                      title="Xóa task"
+                                    >
+                                      Xóa
+                                    </button>
+
+                                    {/* Nút move task */}
+                                    <button
+                                      onClick={() => setMoveTaskData({ kanbanId: kanban._id, fromColumn: column.title, task })}
+                                      className="text-blue-500 hover:text-blue-700 font-bold ml-2"
+                                      title="Chuyển task"
+                                    >
+                                      ⇄
+                                    </button>
+                                  </div>
+                                </div>
+
+                              ))
+                            ) : (
+                              <div className="text-gray-400 italic text-center">
+                                Không có task
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Chỉ hiện form thêm task ở "To Do" */}
+                        {isTodoColumn && (
+                          <div>
+                            <input
+                              type="text"
+                              placeholder="Thêm task mới..."
+                              value={newTaskInput[key] || ""}
+                              onChange={(e) =>
+                                setNewTaskInput((prev) => ({
+                                  ...prev,
+                                  [key]: e.target.value,
+                                }))
+                              }
+                              className="w-full p-2 border rounded-md mb-2"
+                            />
+                            <button
+                              onClick={() =>
+                                handleAddTask(kanban._id, column.title)
+                              }
+                              className="w-full bg-green-500 hover:bg-green-600 text-white py-1 rounded-md"
+                            >
+                              Gửi
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </>
       )}
     </div>
   );
