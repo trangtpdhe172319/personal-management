@@ -22,6 +22,7 @@ import {
 import "./App.css";
 import { useStateContext } from "./contexts/ContextProvider";
 import { AuthContext } from "./AuthContext";
+import Note from "./pages/Notes";
 
 const AppRouter = () => {
   const { setCurrentColor, setCurrentMode, currentMode, activeMenu, currentColor, themeSettings, setThemeSettings } = useStateContext();
@@ -110,6 +111,7 @@ const AppRouter = () => {
                         <Route path="/kanban" element={<Kanban />} />
                         <Route path="/editor" element={<Editor />} />
                         <Route path="/calendar" element={<Calendar />} />
+                        <Route path="/note" element={<Note />} />
                         <Route path="/color-picker" element={<ColorPicker />} />
                         <Route path="/profile" element={<UserProfile />} />
                         <Route path="/line" element={<Line />} />
