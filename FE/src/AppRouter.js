@@ -37,6 +37,7 @@ import {
   ColorPicker,
   ColorMapping,
   Editor,
+  UserProfilePage,
 } from "./pages";
 
 import "./App.css";
@@ -158,7 +159,7 @@ const AppRouter = () => {
                         <Route path="/dashboard" element={<Ecommerce />} />
                         <Route path="/note" element={<Note />} />
                         <Route path="/color-picker" element={<ColorPicker />} />
-                        <Route path="/profile" element={<UserProfile />} />
+                        <Route path="/profile" element={<UserProfilePage />} />
                         <Route path="/line" element={<Line />} />
                         <Route path="/area" element={<Area />} />
                         <Route path="/bar" element={<Bar />} />
