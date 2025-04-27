@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./UserProfile.css";
-
+import axiosInstance from "./Authentication/helper/axiosInstance";
 const UserProfilePage = () => {
   const [profile, setProfile] = useState({
     _id: "",
@@ -56,8 +56,8 @@ const UserProfilePage = () => {
         dob: profile.dob,
         gender: profile.gender,
       };
-      const response = await axios.put(
-        `http://localhost:9999/api/user/${profile._id}`,
+      const response = await axiosInstance.put(
+        `/api/user/${profile._id}`,
         updateData
       );
       setProfile({

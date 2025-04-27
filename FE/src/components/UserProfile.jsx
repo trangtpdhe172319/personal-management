@@ -7,6 +7,7 @@ import { Button } from ".";
 import { userProfileData } from "../data/dummy";
 import { useStateContext } from "../contexts/ContextProvider";
 import avatarPlaceholder from "../data/avatar.jpg";
+import axiosInstance from "../pages/Authentication/helper/axiosInstance";
 
 const UserProfile = () => {
   const { currentColor, setIsLoggedIn } = useStateContext();
@@ -25,8 +26,8 @@ const UserProfile = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:9999/api/user/jwt-current"
+        const response = await axiosInstance.get(
+          "/api/user/jwt-current"
         );
         setProfile({
           _id: response.data._id || "",
@@ -74,9 +75,9 @@ const UserProfile = () => {
     try {
       const formData = new FormData();
       formData.append("avatar", file);
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `http://localhost:9999/api/user/${profile._id}/avatar`,
+      const token = localStorage.getItem("accessToken");
+      const response = await axiosInstance.post(
+        `/api/user/${profile._id}/avatar`,
         formData,
         {
           headers: {
@@ -125,7 +126,11 @@ const UserProfile = () => {
       <div className="flex gap-5 items-center mt-6 border-color border-b-1 pb-6">
         <img
           className="rounded-full h-24 w-24"
-          src={profile.avatar ? profile.avatar : avatarPlaceholder}
+          src={
+            profile.avatar
+              ? `http://localhost:9999${profile.avatar}`
+              : avatarPlaceholder
+          }
           alt="user-profile"
         />
         <input

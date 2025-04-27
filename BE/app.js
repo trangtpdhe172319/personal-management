@@ -22,9 +22,6 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static("uploads"));
-
 // Setup express-session middleware
 app.use(
   session({

@@ -194,7 +194,6 @@ const deleteKanban = async (req, res) => {
 const getKanbanStats = async (req, res) => {
   try {
     const userId = req.account.id;  
-    console.log("USER", userId);
 
     const kanbans = await Kanban.find({ userId: mongoose.Types.ObjectId(userId) });
 
@@ -232,13 +231,6 @@ const getKanbanStats = async (req, res) => {
     res.status(500).json({ message: "Lỗi server khi lấy thống kê", error });
   }
 };
-
-
-
-
-
-
-
 
 module.exports = {
   showAllKanban,

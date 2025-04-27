@@ -10,12 +10,14 @@ const account = require("./routes/account.route");
 const kanbanRoutes = require("./routes/kanban.route");
 const noteRoutes = require("./routes/note.routes");
 
+
 const app = express();
 app.use(cors());
 
 app.use(bodyParser.json()); 
 app.use(bodyParser.urlencoded({ extended: true }));
-
+// Serve static files from uploads directory
+app.use("/uploads", express.static("uploads"));
 mongoose
   .connect(`${process.env.MONGO_URI}`, {
     useNewUrlParser: true,

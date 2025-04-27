@@ -1,18 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "./Authentication/helper/axiosInstance";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { PieChart, Pie, Cell,Tooltip,BarChart,Bar,XAxis,YAxis,
+  CartesianGrid, ResponsiveContainer,Legend } from "recharts";
 
 // Cập nhật mảng màu sắc với 4 màu khác nhau
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7043"];
@@ -21,7 +10,7 @@ const Dashboard = () => {
   const [noteDataByDate, setNoteDataByDate] = useState([]);
   const [kanbanData, setKanbanData] = useState({
     todo: 0,
-    inprogress: 0,
+    inProgress: 0,
     done: 0,
     testing: 0,
   });
@@ -42,11 +31,10 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch Kanban stats từ API mới của bạn
   const fetchKanbanStats = async () => {
     try {
-      const response = await axiosInstance.get("/api/kanbanStats"); // Lấy thống kê từ API
-      setKanbanData(response.data); // Cập nhật trạng thái Kanban
+      const response = await axiosInstance.get("/api/kanbanStats"); 
+      setKanbanData(response.data); 
     } catch (error) {
       console.error("Lỗi khi lấy thống kê Kanban:", error);
     }
@@ -55,7 +43,6 @@ const Dashboard = () => {
   const fetchTomorrowCalendar = async () => {
     try {
       const res = await axiosInstance.get("/api/calendarTomorrow");
-      // Cập nhật ngày cho calendarData
       const [year, month, day] = res?.data?.date?.split("-");
 
       const formattedDate = `${day}-${month}-${year}`;
@@ -65,10 +52,9 @@ const Dashboard = () => {
     }
   };
 
-  // Cập nhật dữ liệu Pie Chart với 4 trạng thái
   const kanbanPieData = [
     { name: "To Do", value: kanbanData.todo },
-    { name: "In Progress", value: kanbanData.inprogress },
+    { name: "In Progress", value: kanbanData.inProgress },
     { name: "Done", value: kanbanData.done },
     { name: "Testing", value: kanbanData.testing },
   ];
@@ -109,15 +95,8 @@ const Dashboard = () => {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie
-                data={kanbanPieData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label
-              >
+              <Pie data={kanbanPieData} dataKey="value" nameKey="name"
+                cx="50%" cy="50%" outerRadius={100} label>
                 {kanbanPieData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
