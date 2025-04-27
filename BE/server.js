@@ -17,6 +17,9 @@ app.use(cors());
 app.use(bodyParser.json()); // express.json()
 app.use(bodyParser.urlencoded({ extended: true })); // express.urlencoded
 
+// Serve static files from uploads directory
+app.use("/uploads", express.static("uploads"));
+
 mongoose
   .connect(`${process.env.MONGO_URI}`, {
     useNewUrlParser: true,

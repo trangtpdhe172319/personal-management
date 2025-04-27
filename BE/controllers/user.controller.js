@@ -111,6 +111,14 @@ module.exports = {
 
       return res.status(200).json(updatedUser);
     } catch (error) {
+      if (
+        error.name === "JsonWebTokenError" ||
+        error.name === "TokenExpiredError"
+      ) {
+        return res
+          .status(401)
+          .json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+      }
       console.error("Update user error:", error);
       return res.status(500).json({ message: "Internal server error" });
     }

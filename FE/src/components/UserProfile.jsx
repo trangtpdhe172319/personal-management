@@ -74,7 +74,7 @@ const UserProfile = () => {
     try {
       const formData = new FormData();
       formData.append("avatar", file);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       const response = await axios.post(
         `http://localhost:9999/api/user/${profile._id}/avatar`,
         formData,
@@ -125,9 +125,14 @@ const UserProfile = () => {
       <div className="flex gap-5 items-center mt-6 border-color border-b-1 pb-6">
         <img
           className="rounded-full h-24 w-24"
-          src={profile.avatar ? profile.avatar : avatarPlaceholder}
+          src={
+            profile.avatar
+              ? `http://localhost:9999${profile.avatar}`
+              : avatarPlaceholder
+          }
           alt="user-profile"
         />
+
         <input
           type="file"
           accept="image/*"
