@@ -8,5 +8,6 @@ router.get("/calendar/:id", verifyToken, calendarController.showDetailCalendar);
 router.post("/calendar", verifyToken, calendarController.addCalendar);
 router.put("/calendar/:calendarId/:taskId", verifyToken, calendarController.updateCalendar);
 router.delete("/calendar/:calendarId/:taskId", verifyToken, calendarController.deleteCalendar);
+router.get("/calendarTomorrow", verifyToken, calendarController.getTomorrowTasks)
 
 module.exports = router;

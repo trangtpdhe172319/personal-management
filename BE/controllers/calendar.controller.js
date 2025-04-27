@@ -130,52 +130,52 @@ module.exports = {
     updateCalendar: async (req, res) => {
         try {
             const { calendarId, taskId } = req.params;
-    
+
             if (!calendarId || !mongoose.Types.ObjectId.isValid(calendarId)) {
                 return res.status(400).json({ error: "Invalid or missing calendarId" });
             }
-    
+
             if (!taskId || !mongoose.Types.ObjectId.isValid(taskId)) {
                 return res.status(400).json({ error: "Invalid or missing taskId" });
             }
-    
+
             const { title, description, start, end, location, is_all_day } = req.body;
-    
+
             if (!req.body || Object.keys(req.body).length === 0) {
                 return res.status(400).json({ message: "Body cannot be empty. Please provide task details." });
             }
-    
+
             if (!title || !title.trim()) {
                 return res.status(400).json({ message: "Missing required field: title" });
             }
-    
+
             const startDate = new Date(start);
             const endDate = new Date(end);
-    
+
             if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
                 return res.status(400).json({ message: "Start and end must be valid date strings" });
             }
-    
+
             if (startDate > endDate) {
                 return res.status(400).json({ message: "End date must be after start date" });
             }
-    
+
             if (typeof is_all_day !== 'boolean') {
                 return res.status(400).json({ message: "is_all_day must be a boolean value" });
             }
-    
+
             // Tìm calendar theo calendarId và userId
             const calendar = await Calendar.findOne({ _id: calendarId, userId: req.account.id });
             if (!calendar) {
                 return res.status(404).json({ message: "Calendar not found or does not belong to user" });
             }
-    
+
             // Tìm task theo taskId trong mảng tasks
             const task = calendar.tasks.id(taskId);
             if (!task) {
                 return res.status(404).json({ message: "Task not found in calendar" });
             }
-    
+
             // Cập nhật task
             task.title = title;
             task.description = description;
@@ -183,15 +183,15 @@ module.exports = {
             task.end = endDate;
             task.location = location;
             task.is_all_day = is_all_day;
-    
+
             // Lưu lại calendar
             await calendar.save();
-    
+
             return res.status(200).json({
                 message: "Task updated successfully",
                 task: task
             });
-    
+
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "Internal server error" });
@@ -200,50 +200,73 @@ module.exports = {
 
     deleteCalendar: async (req, res) => {
         try {
-          const { calendarId, taskId } = req.params;
-      
-          // Kiểm tra calendarId và taskId hợp lệ
-          if (!calendarId.trim() || !taskId.trim()) {
-            return res.status(400).json({ error: "Missing calendarId or taskId" });
-          }
-      
-          if (!mongoose.Types.ObjectId.isValid(calendarId) ||
-            !mongoose.Types.ObjectId.isValid(taskId)) {
-            return res
-              .status(400)
-              .json({ error: "calendarId or taskId is not in the correct format" });
-          }
-      
-          // Kiểm tra calendar tồn tại
-          const calendar = await Calendar.findOne({
-            _id: calendarId,
-            userId: req.account.id,
-          });
-      
-          if (!calendar) {
-            return res.status(404).json({ error: "Calendar not found" });
-          }
-      
-          // Xóa task có taskId khỏi mảng tasks
-          const updatedCalendar = await Calendar.findByIdAndUpdate(
-            calendarId,
-            {
-              $pull: { tasks: { _id: taskId } },
-            },
-            { new: true }
-          );
-      
-          return res.status(200).json({
-            message: "Task deleted successfully",
-            calendar: updatedCalendar,
-          });
+            const { calendarId, taskId } = req.params;
+
+            if (!calendarId.trim() || !taskId.trim()) {
+                return res.status(400).json({ error: "Missing calendarId or taskId" });
+            }
+
+            if (!mongoose.Types.ObjectId.isValid(calendarId) ||
+                !mongoose.Types.ObjectId.isValid(taskId)) {
+                return res
+                    .status(400)
+                    .json({ error: "calendarId or taskId is not in the correct format" });
+            }
+
+            const calendar = await Calendar.findOne({
+                _id: calendarId,
+                userId: req.account.id,
+            });
+
+            if (!calendar) {
+                return res.status(404).json({ error: "Calendar not found" });
+            }
+
+            const updatedCalendar = await Calendar.findByIdAndUpdate(
+                calendarId,
+                {
+                    $pull: { tasks: { _id: taskId } },
+                },
+                { new: true }
+            );
+
+            return res.status(200).json({
+                message: "Task deleted successfully",
+                calendar: updatedCalendar,
+            });
         } catch (error) {
-          console.log(error);
-          return res.status(500).json({
-            message: "Internal server error",
+            console.log(error);
+            return res.status(500).json({
+                message: "Internal server error",
+            });
+        }
+    },
+
+    getTomorrowTasks: async (req, res) => {
+        try {
+          // Lấy ngày mai
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);  // Tính ngày mai
+          const tomorrowDate = tomorrow.toISOString().split('T')[0]; // Định dạng ngày sang yyyy-mm-dd
+    
+          // Lấy userId từ thông tin xác thực người dùng đã đăng nhập
+          const userId = req.account.id;
+    
+          // Tìm Calendar của user cho ngày mai
+          const calendar = await Calendar.findOne({
+            userId: userId,
+            date: tomorrowDate,  // Tìm theo ngày mai
           });
+    
+          if (!calendar || !calendar.tasks || calendar.tasks.length === 0) {
+            return res.status(404).json({ message: "Không có công việc nào cho ngày mai." });
+          }
+    
+          // Trả về tất cả các task trong ngày mai
+          return res.status(200).json(calendar.tasks);
+        } catch (error) {
+          console.error(error);
+          return res.status(500).json({ message: "Lỗi hệ thống." });
         }
       },
-
-
 }

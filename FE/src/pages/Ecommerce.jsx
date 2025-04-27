@@ -1,61 +1,77 @@
-// src/pages/Dashboard.js
 import React, { useEffect, useState } from "react";
 import axiosInstance from "./Authentication/helper/axiosInstance";
-import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  ResponsiveContainer, Legend } from "recharts";
 
-const COLORS = ["#8884d8", "#82ca9d", "#ffc658"];
+// Cập nhật mảng màu sắc với 4 màu khác nhau
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7043"];
 
 const Dashboard = () => {
-  const [noteData, setNoteData] = useState([]);
-  const [data, setData] = useState({
-    kanban: { todo: 0, inprogress: 0, done: 0 },
-    calendar: { date: "", tasks: [] },
-  });
+  const [noteDataByDate, setNoteDataByDate] = useState([]);
+  const [kanbanData, setKanbanData] = useState({ todo: 0, inprogress: 0, done: 0, testing: 0 });
+  const [calendarData, setCalendarData] = useState({ date: "", tasks: [] });
 
   useEffect(() => {
-    fetchNoteCount();
-    fetchDashboard();
+    fetchNoteCountByDate();
+    fetchKanbanStats();
+    fetchTomorrowCalendar();
   }, []);
 
-  const fetchNoteCount = async () => {
+  const fetchNoteCountByDate = async () => {
     try {
       const response = await axiosInstance.get("/api/dashboard/count-notes");
-      setNoteData(response.data); 
+      setNoteDataByDate(response.data.notes);
     } catch (error) {
-      console.error("Lỗi khi lấy tổng số ghi chú:", error);
+      console.error("Lỗi khi lấy số lượng ghi chú theo ngày:", error);
     }
   };
 
-  const fetchDashboard = async () => {
+  // Fetch Kanban stats từ API mới của bạn
+  const fetchKanbanStats = async () => {
     try {
-      const res = await axiosInstance.get("/api/dashboard");
-      setData(res.data);
+      const response = await axiosInstance.get("/api/kanbanStats"); // Lấy thống kê từ API
+      setKanbanData(response.data); // Cập nhật trạng thái Kanban
     } catch (error) {
-      console.error("Error fetching dashboard data", error);
+      console.error("Lỗi khi lấy thống kê Kanban:", error);
     }
   };
 
+  const fetchTomorrowCalendar = async () => {
+    try {
+      const res = await axiosInstance.get("/api/calendarTomorrow");
+      const data = res.data.calendar;
+      // Cập nhật ngày cho calendarData
+      const formattedDate = new Date(data.date); 
+      setCalendarData({ date: formattedDate, tasks: data.tasks });
+    } catch (error) {
+      console.error("Lỗi khi lấy công việc ngày mai:", error);
+    }
+  };
+
+  // Cập nhật dữ liệu Pie Chart với 4 trạng thái
   const kanbanPieData = [
-    { name: "To Do", value: data.kanban.todo },
-    { name: "In Progress", value: data.kanban.inprogress },
-    { name: "Done", value: data.kanban.done },
+    { name: "To Do", value: kanbanData.todo },
+    { name: "In Progress", value: kanbanData.inprogress },
+    { name: "Done", value: kanbanData.done },
+    { name: "Testing", value: kanbanData.testing }
   ];
 
   return (
     <div className="p-6 space-y-8">
       {/* Notes theo ngày */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Số lượng Note theo ngày</h2>
-        {noteData.length === 0 ? (
+        <h2 className="text-2xl font-bold mb-4">Số lượng Ghi chú theo ngày</h2>
+        {noteDataByDate.length === 0 ? (
           <p className="text-gray-500 text-center">Không có ghi chú nào.</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={noteData}>
+            <BarChart data={noteDataByDate}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis allowDecimals={false} />
               <Tooltip />
-              <Bar dataKey="count" fill="#8884d8" barSize={40} />
+              <Legend />
+              <Bar dataKey="count" name="Số lượng Notes" fill="#8884d8" barSize={40} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -63,7 +79,7 @@ const Dashboard = () => {
 
       {/* Kanban Pie Chart */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Kanban Tasks</h2>
+        <h2 className="text-2xl font-bold mb-4">Công việc Kanban</h2>
         {kanbanPieData.every(item => item.value === 0) ? (
           <p className="text-gray-500 text-center">Không có công việc Kanban nào.</p>
         ) : (
@@ -83,22 +99,30 @@ const Dashboard = () => {
                 ))}
               </Pie>
               <Tooltip />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         )}
       </div>
 
-      {/* Calendar - Công việc ngày */}
+      {/* Calendar - Công việc ngày mai */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-4">
-          Công việc ngày {data.calendar.date ? data.calendar.date : "(chưa có ngày nào)"}
+          Công việc ngày mai ({calendarData.date ? calendarData.date : "chưa có ngày nào"})
         </h2>
-        {data.calendar.tasks.length === 0 ? (
-          <p className="text-gray-500">Không có công việc nào.</p>
+        {calendarData.tasks.length === 0 ? (
+          <p className="text-gray-500">Không có công việc nào vào ngày mai.</p>
         ) : (
-          <ul className="list-disc list-inside space-y-2">
-            {data.calendar.tasks.map((task, index) => (
-              <li key={index}>{task.title}</li>
+          <ul className="space-y-4">
+            {calendarData.tasks.map((task, index) => (
+              <li key={task._id} className="border-b pb-2">
+                <h3 className="font-semibold text-lg">{task.title}</h3>
+                {task.description && <p className="text-gray-600">{task.description}</p>}
+                <div className="text-sm text-gray-500">
+                  <p>Thời gian: {new Date(task.start).toLocaleTimeString()} - {new Date(task.end).toLocaleTimeString()}</p>
+                  {task.location && <p>Địa điểm: {task.location}</p>}
+                </div>
+              </li>
             ))}
           </ul>
         )}

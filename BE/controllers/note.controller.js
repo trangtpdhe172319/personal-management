@@ -1,5 +1,5 @@
 const { Note } = require("../models/note.model");
-
+const mongoose = require('mongoose');
 // Lấy tất cả ghi chú chưa bị xoá
 exports.showAllNote = async (req, res) => {
   try {
@@ -142,9 +142,9 @@ exports.countNotes = async (req, res) => {
     const notes = await Note.aggregate([
       {
         $match: {
-          userId: req.account.id,
+          userId:  mongoose.Types.ObjectId(req.account.id),
           isDeleted: false,
-          createdAt: { $type: "date" } // Thêm điều kiện này
+          createdAt: { $type: "date" }
         },
       },
       {

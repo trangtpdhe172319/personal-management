@@ -11,6 +11,6 @@ router.post("/kanban", verifyToken, kanbanController.createKanban);
 router.put("/kanban/:kanbanId/move-task", verifyToken, kanbanController.moveTask);
 router.put("/kanban/:kanbanId/add-task", verifyToken, kanbanController.addTask);
 router.put("/kanban/:kanbanId/delete-task", verifyToken, kanbanController.deleteTask);
-
+router.get("/kanbanStats", verifyToken, kanbanController.getKanbanStats)
 router.delete("/kanban/:kanbanId",verifyToken, kanbanController.deleteKanban)
 module.exports = router;

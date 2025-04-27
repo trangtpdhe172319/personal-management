@@ -5,37 +5,37 @@ const Kanban = require("../models/kanban.model");
 
 const showAllKanban = async (req, res) => {
   try {
-      const userId = req.account?.id;
+    const userId = req.account?.id;
 
-      if (!userId) {
-          return res.status(400).json({ message: "Không có userId trong token" });
-      }
+    if (!userId) {
+      return res.status(400).json({ message: "Không có userId trong token" });
+    }
 
-      const kanban = await Kanban.find({ userId });
-      if (!kanban || kanban.length === 0) {
-          return res.status(404).json({ message: "Không tìm thấy bảng Kanban nào cho người dùng này" });
-      }
+    const kanban = await Kanban.find({ userId });
+    if (!kanban || kanban.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy bảng Kanban nào cho người dùng này" });
+    }
 
-      return res.status(200).json(kanban);
+    return res.status(200).json(kanban);
   } catch (error) {
-      return res.status(500).json({ message: "Lỗi server" });
+    return res.status(500).json({ message: "Lỗi server" });
   }
 };
 
 // GET /kanban/:userId - Lấy tất cả bảng của người dùng
 const getKanbanByUser = async (req, res) => {
-    const userId = req.params.userId;
-    try {
-        const kanbanBoards = await Kanban.find({ userId });
-        if (!kanbanBoards.length) {
-            return res.status(404).json({ message: "Không tìm thấy bảng Kanban nào" });
-        }
-        res.status(200).json(kanbanBoards);
-    } catch (error) {
-      console.log(error);
-      
-        res.status(500).json({ message: "Lỗi server", error });
+  const userId = req.params.userId;
+  try {
+    const kanbanBoards = await Kanban.find({ userId });
+    if (!kanbanBoards.length) {
+      return res.status(404).json({ message: "Không tìm thấy bảng Kanban nào" });
     }
+    res.status(200).json(kanbanBoards);
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ message: "Lỗi server", error });
+  }
 };
 
 // POST /kanban
@@ -191,13 +191,62 @@ const deleteKanban = async (req, res) => {
   }
 };
 
+const getKanbanStats = async (req, res) => {
+  try {
+    const userId = req.account.id;  
+    console.log("USER", userId);
+
+    const kanbans = await Kanban.find({ userId: mongoose.Types.ObjectId(userId) });
+
+    if (!kanbans || kanbans.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy Kanban cho userId này" });
+    }
+
+    const stats = {
+      todo: 0,
+      inProgress: 0,
+      done: 0,
+      testing: 0,
+    };
+
+    kanbans.forEach(kanban => {
+      kanban.columns.forEach(column => {
+        column.tasks.forEach(task => {
+          if (column.title === "To Do") {
+            stats.todo++;
+          } else if (column.title === "In Progress") {
+            stats.inProgress++;
+          } else if (column.title === "Done") {
+            stats.done++;
+          } else if (column.title === "Testing") {
+            stats.testing++;
+          }
+        });
+      });
+    });
+
+    res.status(200).json(stats);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server khi lấy thống kê", error });
+  }
+};
+
+
+
+
+
+
+
 
 module.exports = {
-    showAllKanban,
-    getKanbanByUser,
-    createKanban,
-    addTask, 
-    moveTask, 
-    deleteTask,
-    deleteKanban
+  showAllKanban,
+  getKanbanByUser,
+  createKanban,
+  addTask,
+  moveTask,
+  deleteTask,
+  deleteKanban,
+  getKanbanStats
 };
