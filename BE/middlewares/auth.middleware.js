@@ -44,6 +44,7 @@ module.exports = async (req, res, next) => {
     }
 
     console.log("Decoded token:", decoded);
+    console.log("Decoded ID:", decoded.id);
 
     if (!decoded.id || !mongoose.Types.ObjectId.isValid(decoded.id)) {
       console.log("ID không hợp lệ:", decoded?.id);

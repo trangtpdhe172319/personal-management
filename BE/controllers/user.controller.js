@@ -92,13 +92,7 @@ module.exports = {
         return res.status(400).json({ message: "Invalid user ID" });
       }
 
-      const allowedUpdates = [
-        "mobileNumber",
-        "address1",
-        "address2",
-        "country",
-        "avatar",
-      ];
+      const allowedUpdates = ["fullName", "dob", "gender", "avatar"];
       const updates = {};
       for (const key of allowedUpdates) {
         if (req.body[key] !== undefined) {
