@@ -34,12 +34,13 @@ const Scheduler = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("http://localhost:9999/api/calendar", {
+
+      const response = await axiosInstance.get("/api/calendar", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
+      console.log("Lịch trình công việc: ");
       // Flatten calendar and tasks
       const formattedData = response.data.flatMap((calendar) =>
         calendar.tasks.map((task) => ({
