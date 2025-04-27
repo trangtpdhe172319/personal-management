@@ -30,7 +30,7 @@ mongoose
   });
 
 app.use("/api/user", userRouter);
-app.use("/api", userRouter);
+// app.use("/api", userRouter);
 app.use("/api", calendarRoutes);
 app.use("/api", account);
 app.use("/api", kanbanRoutes);
