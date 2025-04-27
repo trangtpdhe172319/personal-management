@@ -26,7 +26,11 @@ import {
 import { BiColorFill } from "react-icons/bi";
 import { IoMdContacts } from "react-icons/io";
 import { RiContactsLine, RiStockLine } from "react-icons/ri";
-import { MdOutlineSupervisorAccount, MdNote } from "react-icons/md";
+import {
+  MdOutlineSupervisorAccount,
+  MdNote,
+  MdDashboard,
+} from "react-icons/md";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { TiTick } from "react-icons/ti";
 import { GiLouvrePyramid } from "react-icons/gi";
@@ -67,7 +71,12 @@ export const gridOrderStatus = (props) => (
 export const kanbanGrid = [
   { headerText: "To Do", keyField: "To Do", allowToggle: true },
   { headerText: "In Progress", keyField: "In Progress", allowToggle: true },
-  { headerText: "Testing", keyField: "Testing", allowToggle: true, isExpanded: false },
+  {
+    headerText: "Testing",
+    keyField: "Testing",
+    allowToggle: true,
+    isExpanded: false,
+  },
   { headerText: "Done", keyField: "Done", allowToggle: true },
 ];
 
@@ -518,6 +527,10 @@ export const links = [
       {
         icon: <BsCurrencyDollar />,
         name: "profile",
+      },
+      {
+        icon: <MdDashboard />,
+        name: "Dashboard",
       },
     ],
   },
