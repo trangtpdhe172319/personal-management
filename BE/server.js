@@ -29,6 +29,7 @@ mongoose
     console.error("❌ Kết nối MongoDB thất bại:", err.message);
   });
 
+// app.use("/api/user", userRouter);
 app.use("/api/user", userRouter);
 // app.use("/api", userRouter);
 app.use("/api", calendarRoutes);
