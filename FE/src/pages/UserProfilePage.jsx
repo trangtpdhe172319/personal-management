@@ -14,6 +14,7 @@ const UserProfilePage = () => {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [fullNameError, setFullNameError] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -49,6 +50,27 @@ const UserProfilePage = () => {
     e.preventDefault();
     setMessage("");
     setSaveError("");
+    setFullNameError("");
+
+    // Validation for fullName
+    if (!profile.fullName || profile.fullName.trim() === "") {
+      setFullNameError("Full Name is required.");
+      setSaving(false);
+      return;
+    }
+
+    if (profile.fullName.length > 50) {
+      setFullNameError("Full Name cannot exceed 50 characters.");
+      setSaving(false);
+      return;
+    }
+
+    if (/\d/.test(profile.fullName)) {
+      setFullNameError("Full Name cannot contain numbers.");
+      setSaving(false);
+      return;
+    }
+
     setSaving(true);
     try {
       const updateData = {
@@ -87,9 +109,19 @@ const UserProfilePage = () => {
             id="fullName"
             name="fullName"
             value={profile.fullName}
-            onChange={handleChange}
+            onChange={(e) => {
+              handleChange(e);
+              if (fullNameError) {
+                setFullNameError("");
+              }
+            }}
             className="form-control"
           />
+          {fullNameError && (
+            <p className="text-danger" style={{ marginTop: "0.25rem" }}>
+              {fullNameError}
+            </p>
+          )}
         </div>
         <div className="profile-form-row">
           <label htmlFor="dob">Date of Birth</label>
