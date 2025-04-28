@@ -22,13 +22,12 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axiosInstance.get(
-          "/api/user/jwt-current"
-        );
+        const response = await axiosInstance.get("/api/user/jwt-current");
         setProfile({
           _id: response.data._id || "",
           fullName: response.data.fullName || "",
@@ -87,6 +86,7 @@ const UserProfile = () => {
         }
       );
       setProfile((prev) => ({ ...prev, avatar: response.data.avatar }));
+      setAvatarTimestamp(Date.now());
     } catch (error) {
       console.error("Error uploading avatar:", error.response || error);
       setSaveError("Failed to upload avatar.");
@@ -128,7 +128,7 @@ const UserProfile = () => {
           className="rounded-full h-24 w-24"
           src={
             profile.avatar
-              ? `http://localhost:9999${profile.avatar}`
+              ? `http://localhost:9999${profile.avatar}?t=${avatarTimestamp}`
               : avatarPlaceholder
           }
           alt="user-profile"
