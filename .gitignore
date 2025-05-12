@@ -3,6 +3,18 @@ fe/node_modules
 fe/.pnp
 fe/.pnp.js
 
+fe/npm-debug.log
+fe/yarn-error.log
+fe/yarn-debug.log
+fe/package-lock.json
+fe/yarn.lock
+
+be/npm-debug.log
+be/yarn-error.log
+be/yarn-debug.log
+be/package-lock.json
+be/yarn.lock
+
 # Ignore BE dependencies (nếu có)
 be/node_modules
 
